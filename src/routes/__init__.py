@@ -22,6 +22,7 @@ first_message = '''
     
     Feel free to ask me a question as I am trained to answer frequently asked questions.
 '''
+twilio_number_code = os.environ.get("TWILIO_NUMBER_CODE")
 
 
 # Define a route for handling incoming WhatsApp messages
@@ -31,23 +32,20 @@ async def whatsapp_endpoint(request: Request):
     :param request: Request object from Twilio
     :return: Message acknowledgement with status 200
     """
-
-    logger.info(f"Received request")
     try:
         form = await request.form()
         user_message = form['Body'].lower()  # User's message
         user_number = form['Author']  # User's phone number
+        logger.info(f"Received request with query - {user_message}")
 
-        if user_message == "join scared-actually":
+        if user_message == twilio_number_code:
             ai_response = first_message
         else:
             # Use OpenAI API for general queries
             ai_response = get_ai_response(user_phone=user_number, message=user_message)
 
         # Create Twilio WhatsApp response
-        client.conversations.v1.conversations(
-            form['ConversationSid']
-        ).messages.create(body=ai_response)
+        client.conversations.v1.conversations(form['ConversationSid']).messages.create(body=ai_response)
 
         return MessagingResponse()
     except Exception as e:

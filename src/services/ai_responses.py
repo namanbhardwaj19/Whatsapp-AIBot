@@ -1,5 +1,4 @@
 import os
-
 from openai import OpenAI
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -17,12 +16,19 @@ client = OpenAI(
 
 
 def get_ai_response(user_phone, message):
+    """
+    this function will generate the response for the given query
+    """
     thread_id = add_message_in_thread(user_phone, message)
     text = run_thread(thread_id)
     return text
 
 
 def add_message_in_thread(user_phone, message):
+    """
+    this function will add the user's message in thread, if thread is not
+     already created, it will create a thread and then put new message in it
+    """
     thread_id = user_thread_info.get(user_phone)
     if not thread_id:
         new_thread = client.beta.threads.create()
@@ -37,6 +43,9 @@ def add_message_in_thread(user_phone, message):
 
 
 def run_thread(thread_id):
+    """
+    this function will finally run the thread and return the generated response
+    """
     run = client.beta.threads.runs.create(
         thread_id=thread_id,
         assistant_id=ASSISTANT_ID
