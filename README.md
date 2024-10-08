@@ -29,17 +29,18 @@ Get your Twilio WhatsApp sandbox number.
 Configure your conversation service webhook to point to your FastAPI app endpoint.
 
 **Set up OpenAI API:**
-Create a OpenAI account.
+Create an OpenAI account.
 Create an Assistant and provide knowledge base and prompt as System Instructions.
 Get your OpenAI API key from the OpenAI platform.
 Set your API key in your environment variables or directly in the code.
 
 **Run the FastAPI server:**
 uvicorn main:app --reload
+OR
+just run run.py
 
 **Expose your local development server using ngrok for Twilio to access your webhook:**
-
-**Install ngrok**
+Install ngrok
 Set auth token in ngrok config
 RUN ngrok http 8000
 Configuration
@@ -68,4 +69,5 @@ generate a response using the provided knowledge base and prompt.
 The response is then formatted and sent back to the FastAPI handler.
 
 5. Session Management:
-The project tracks conversations per user by managing user session data in redis.
+The project tracks conversations per user by managing user session data in local storage. We could also store 
+this info in cache but for simplicity it is currently stored in local storage.
