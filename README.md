@@ -24,32 +24,49 @@ pip install -r requirements.txt
 
 **Set up the Twilio API:**
 
-Create a Twilio account.
-Get your Twilio WhatsApp sandbox number.
-Configure your conversation service webhook to point to your FastAPI app endpoint.
+-Create a Twilio account.
+
+-Get your Twilio WhatsApp sandbox number.
+
+-Configure your conversation service webhook to point to your FastAPI app endpoint.
+
 
 **Set up OpenAI API:**
-Create an OpenAI account.
-Create an Assistant and provide knowledge base and prompt as System Instructions.
-Get your OpenAI API key from the OpenAI platform.
-Set your API key in your environment variables or directly in the code.
+
+-Create an OpenAI account.
+
+-Create an Assistant and provide knowledge base and prompt as System Instructions.
+
+-Get your OpenAI API key from the OpenAI platform.
+
+-Set your API key in your environment variables or directly in the code.
+
 
 **Run the FastAPI server:**
-uvicorn main:app --reload
+- uvicorn main:app --reload
+
 OR
-just run run.py
+
+- just run run.py
+
 
 **Expose your local development server using ngrok for Twilio to access your webhook:**
-Install ngrok
-Set auth token in ngrok config
-RUN ngrok http 8000
+
+-Install ngrok
+
+-Set auth token in ngrok config
+
+-RUN ngrok http 8000
 
 Configuration:
 Add your OpenAI API key and Twilio credentials in the project’s .env file or as environment variables.
 
+
 **Usage:**
-Once the server is up and running, users can interact with the AI agent via WhatsApp. 
-The agent will respond based on the conversation context and the knowledge base.
+
+-Once the server is up and running, users can interact with the AI agent via WhatsApp. 
+
+-The agent will respond based on the conversation context and the knowledge base.
 
 
 
