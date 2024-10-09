@@ -12,18 +12,9 @@ whatsapp = APIRouter(
 
 account_sid = os.environ.get("ACCOUNT_SID")
 auth_token = os.environ.get("AUTH_TOKEN")
-client = Client(account_sid, auth_token)
-first_message = '''
-    Good day, I am Nick the SRSsolar assistant, I can help you with the following:
-    
-    *Select a solar or backup solution*
-    *Pricing of solar and back up solutions*
-    *Get someone to call you back*
-    
-    Feel free to ask me a question as I am trained to answer frequently asked questions.
-'''
 twilio_number_code = os.environ.get("TWILIO_NUMBER_CODE")
 
+client = Client(account_sid, auth_token)
 
 # Define a route for handling incoming WhatsApp messages
 @whatsapp.post('/whatsapp')
@@ -37,12 +28,7 @@ async def whatsapp_endpoint(request: Request):
         user_message = form['Body'].lower()  # User's message
         user_number = form['Author']  # User's phone number
         logger.info(f"Received request with query - {user_message}")
-
-        if user_message == twilio_number_code:
-            ai_response = first_message
-        else:
-            # Use OpenAI API for general queries
-            ai_response = get_ai_response(user_phone=user_number, message=user_message)
+        ai_response = get_ai_response(user_phone=user_number, message=user_message)
 
         # Create Twilio WhatsApp response
         client.conversations.v1.conversations(form['ConversationSid']).messages.create(body=ai_response)
