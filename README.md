@@ -43,8 +43,8 @@ just run run.py
 Install ngrok
 Set auth token in ngrok config
 RUN ngrok http 8000
-Configuration
 
+Configuration:
 Add your OpenAI API key and Twilio credentials in the project’s .env file or as environment variables.
 
 **Usage:**
