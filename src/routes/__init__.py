@@ -1,6 +1,11 @@
+import mimetypes
 import os
+import re
+import requests
 from fastapi import Request, APIRouter
 from fastapi.logger import logger
+from openai import OpenAI
+from requests import Timeout
 from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
 from src.services.ai_responses import get_ai_response
@@ -13,8 +18,15 @@ whatsapp = APIRouter(
 account_sid = os.environ.get("ACCOUNT_SID")
 auth_token = os.environ.get("AUTH_TOKEN")
 twilio_number_code = os.environ.get("TWILIO_NUMBER_CODE")
+OPEN_AI_API_KEY = os.environ.get("OPEN_AI_API_KEY")
+TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER")
 
-client = Client(account_sid, auth_token)
+
+twilio_client = Client(account_sid, auth_token)
+client = OpenAI(
+    api_key=OPEN_AI_API_KEY,
+)
+
 
 # Define a route for handling incoming WhatsApp messages
 @whatsapp.post('/whatsapp')
@@ -26,13 +38,59 @@ async def whatsapp_endpoint(request: Request):
     try:
         form = await request.form()
         user_message = form['Body'].lower()  # User's message
-        user_number = form['Author']  # User's phone number
-        logger.info(f"Received request with query - {user_message}")
-        ai_response = get_ai_response(user_phone=user_number, message=user_message)
+        user_number = form['From']
 
-        # Create Twilio WhatsApp response
-        client.conversations.v1.conversations(form['ConversationSid']).messages.create(body=ai_response)
+        media_url = form.get("MediaUrl0")  # For media (voice recordings)
+        media_content_type = form.get("MediaContentType0")  # Content type (e.g., audio/ogg)
+
+        if user_message:
+            logger.info(f"User message (Text) : {user_message}")
+            response = get_ai_response(user_phone=user_number, message=user_message)
+
+        elif media_url and media_content_type.startswith("audio/"):
+            # Handle voice message (requires transcription)
+            user_message = transcribe_audio(media_url)
+            if user_message:
+                logger.info(f"User message (Audio) : {user_message}")
+                response = get_ai_response(user_phone=user_number, message=user_message)
+            else:
+                response = "Could not transcribe voice message."
+
+        logger.info(f"Received request with query - {user_message}")
+
+        pattern = r'【\d+:\d+†[^\]]+】'
+        response = re.sub(pattern, '', response)
+        twilio_client.messages.create(
+            body=response,
+            from_=TWILIO_PHONE_NUMBER,
+            to=user_number
+        )
 
         return MessagingResponse()
     except Exception as e:
         logger.error(f"Got an exception - {e}")
+
+
+def transcribe_audio(media_url):
+    auth = (account_sid, auth_token)
+    try:
+        response = requests.get(media_url, auth=auth, timeout=10)
+        response.raise_for_status()
+    except Timeout:
+        return None
+    except Exception as e:
+        logger.exception(f"Error while transcribing audio {e}")
+
+    content_type = response.headers['Content-Type']
+    ext = mimetypes.guess_extension(content_type)
+    if ext not in ['.flac', '.m4a', '.mp3', '.mp4', '.mpeg', '.mpga', '.oga', '.ogg', '.wav', '.webm']:
+        return None
+
+    temp_audio_file = f"temp_audio{ext}"
+    with open(temp_audio_file, 'wb') as f:
+        f.write(response.content)
+
+    with open(temp_audio_file, 'rb') as f:
+        response = client.audio.transcriptions.create(model="whisper-1", file=f)
+        logger.info(f"Transcribed audio message as - {response.text}")
+        return response.text
